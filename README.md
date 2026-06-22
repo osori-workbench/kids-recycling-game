@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 분리수거 탐험대
 
-## Getting Started
+아이들이 게임처럼 놀면서 분리수거를 배울 수 있도록 만든 Next.js 웹 게임입니다.
 
-First, run the development server:
+## 기능
+
+- **연습 모드**: 시간 제한 없이 천천히 분리수거 분류를 익히는 모드
+- **60초 도전 모드**: 제한 시간 안에 최대한 많이 맞히는 스코어 모드
+- **즉시 피드백**: 정답/오답마다 학습 메시지 제공
+- **최고 기록 저장**: 브라우저 `localStorage`에 모드별 최고 점수 저장
+- **Vercel 배포 친화적**: 별도 서버 없이 바로 배포 가능한 정적 Next.js 앱
+
+## 로컬 실행
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 `http://localhost:3000` 을 열면 됩니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 검증
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## 배포
 
-To learn more about Next.js, take a look at the following resources:
+Vercel에 import 해서 바로 배포할 수 있습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. GitHub 저장소를 Vercel에 연결
+2. Framework Preset은 `Next.js` 유지
+3. Build Command / Output 설정은 기본값 사용
+4. Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 기술 스택
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
