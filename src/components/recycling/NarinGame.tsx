@@ -19,6 +19,7 @@ import { accuracy, allCategories, nextItem, readBestScores, writeBestScores } fr
 import { BestScores, Category, RecyclingItem } from "@/lib/recycling/types";
 
 const maxMistakes = 5;
+const toastDurationMs = 1400;
 
 type DraggableCardProps = {
   item: RecyclingItem;
@@ -29,6 +30,11 @@ type DroppableBinProps = {
   category: Category;
   disabled: boolean;
   helperText: string;
+};
+
+type ToastState = {
+  message: string;
+  tone: "success" | "error";
 };
 
 function DraggableCard({ item, disabled }: DraggableCardProps) {
@@ -98,7 +104,7 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`touch-none select-none rounded-[2rem] border border-sky-100 bg-gradient-to-r from-cyan-50 via-sky-50 to-indigo-50 p-5 shadow-[0_18px_60px_rgba(52,84,104,0.12)] transition sm:p-6 ${
+      className={`mx-auto w-full max-w-3xl touch-none select-none rounded-[2rem] border border-sky-100 bg-gradient-to-r from-cyan-50 via-sky-50 to-indigo-50 p-5 shadow-[0_18px_60px_rgba(52,84,104,0.12)] transition sm:p-6 ${
         disabled ? "opacity-60" : "cursor-grab active:cursor-grabbing"
       } ${isDragging ? "scale-[1.02] shadow-2xl" : ""}`}
     >
@@ -110,10 +116,7 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">{item.name}</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-            카드를 잡고 아래 쓰레기통으로 천천히 끌어다 놓아보세요.
-          </p>
+          <h3 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-[2.75rem]">{item.name}</h3>
         </div>
       </div>
     </div>
@@ -150,20 +153,43 @@ export function NarinGame() {
   const [streak, setStreak] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [mistakes, setMistakes] = useState(0);
-  const [feedback, setFeedback] = useState("카드를 끌어서 맞는 통에 넣어보세요. 5번 틀리면 게임이 끝나요!");
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores("narin"));
+  const toastTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     writeBestScores("narin", bestScores);
   }, [bestScores]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current !== null) {
+        window.clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const accuracyValue = useMemo(() => accuracy(score, questionCount), [questionCount, score]);
   const bestScore = Math.max(bestScores.practice, score);
   const remainingChances = Math.max(0, maxMistakes - mistakes);
+  const interactionLocked = isFinished || toast !== null;
+
+  const showToastThen = (nextToast: ToastState, afterToast?: () => void) => {
+    if (toastTimeoutRef.current !== null) {
+      window.clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast(nextToast);
+    toastTimeoutRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+      afterToast?.();
+    }, toastDurationMs);
+  };
 
   const handleAnswer = (selectedCategory: Category) => {
-    if (isFinished) return;
+    if (interactionLocked) return;
 
     const correct = selectedCategory === currentItem.category;
     const answerInfo = categories[currentItem.category];
@@ -172,17 +198,21 @@ export function NarinGame() {
     if (correct) {
       const nextScoreValue = score + 1;
       const nextStreak = streak + 1;
+      const nextQuestion = nextItem(currentItem);
+
       setScore(nextScoreValue);
       setStreak(nextStreak);
       setBestScores((prev) =>
         nextScoreValue > prev.practice ? { ...prev, practice: nextScoreValue } : prev
       );
-      setFeedback(
-        `정답! ${currentItem.name}는 ${answerInfo.label} 통입니다. ${currentItem.fact} ${
-          nextStreak >= 2 ? `현재 ${nextStreak}콤보예요!` : ""
-        }`
+
+      showToastThen(
+        {
+          tone: "success",
+          message: `정답! ${currentItem.name}는 ${answerInfo.label} 통이에요.${nextStreak >= 2 ? ` ${nextStreak}콤보!` : ""}`,
+        },
+        () => setCurrentItem(nextQuestion)
       );
-      setCurrentItem(nextItem(currentItem));
       return;
     }
 
@@ -192,16 +222,21 @@ export function NarinGame() {
 
     if (nextMistakes >= maxMistakes) {
       setIsFinished(true);
-      setFeedback(
-        `다섯 번 틀려서 게임 종료! ${currentItem.name}는 ${answerInfo.label} 통이에요. 다시 시작해서 기록을 깨보세요.`
-      );
+      showToastThen({
+        tone: "error",
+        message: `아쉬워요! ${currentItem.name}는 ${answerInfo.label} 통이에요. 다섯 번 틀려서 게임 종료예요.`,
+      });
       return;
     }
 
-    setFeedback(
-      `아쉬워요! ${currentItem.name}는 ${answerInfo.label} 통이에요. ${currentItem.tip} 이제 ${maxMistakes - nextMistakes}번 더 틀리면 끝나요.`
+    const nextQuestion = nextItem(currentItem);
+    showToastThen(
+      {
+        tone: "error",
+        message: `아쉬워요! ${currentItem.name}는 ${answerInfo.label} 통이에요. 남은 기회 ${maxMistakes - nextMistakes}번!`,
+      },
+      () => setCurrentItem(nextQuestion)
     );
-    setCurrentItem(nextItem(currentItem));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -223,22 +258,19 @@ export function NarinGame() {
         accentClassName="bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700"
       />
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_60px_rgba(52,84,104,0.12)] ring-1 ring-slate-100 sm:p-8 lg:p-10">
+      <div className="relative rounded-[2rem] bg-white p-6 shadow-[0_18px_60px_rgba(52,84,104,0.12)] ring-1 ring-slate-100 sm:p-8 lg:p-10">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-500">나린이 버전</p>
-        <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">
-          카드를 끌어다 쓰레기통에 넣어보세요!
-        </h2>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <DraggableCard item={currentItem} disabled={isFinished} />
+            <DraggableCard item={currentItem} disabled={interactionLocked} />
 
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {allCategories().map((category) => (
                 <DroppableBin
                   key={category}
                   category={category}
-                  disabled={isFinished}
+                  disabled={interactionLocked}
                   helperText="끌어다 놓기"
                 />
               ))}
@@ -246,10 +278,19 @@ export function NarinGame() {
           </DndContext>
         </div>
 
-        <div className="mt-8 rounded-[1.75rem] bg-sky-50 p-5 ring-1 ring-sky-100 sm:p-6">
-          <p className="text-sm font-bold text-sky-700">게임 메시지</p>
-          <p className="mt-2 text-base leading-7 text-sky-950 sm:text-lg">{feedback}</p>
-        </div>
+        {toast ? (
+          <div className="pointer-events-none fixed inset-x-0 top-24 z-30 flex justify-center px-4">
+            <div
+              className={`max-w-2xl rounded-[1.5rem] px-6 py-4 text-center text-base font-black text-white shadow-2xl backdrop-blur sm:text-lg ${
+                toast.tone === "success"
+                  ? "bg-emerald-500/95 shadow-emerald-200"
+                  : "bg-rose-500/95 shadow-rose-200"
+              }`}
+            >
+              {toast.message}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {isFinished ? (
