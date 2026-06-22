@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "분리수거 탐험대",
-  description: "아이들을 위한 분리수거 학습 웹 게임",
+  title: "김나스 가족 게임",
+  description: "가족이 함께 즐기는 어린이용 웹 게임 모음",
 };
 
 export default function RootLayout({
