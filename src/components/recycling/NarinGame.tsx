@@ -6,12 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 import { RecyclingBinButton } from "@/components/recycling/RecyclingBinButton";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
 import { ScoreBoard } from "@/components/recycling/ScoreBoard";
-import { categories, challengeSeconds } from "@/lib/recycling/data";
-import { accuracy, allCategories, modeSummary, nextItem, readBestScores, writeBestScores } from "@/lib/recycling/game-utils";
-import { BestScores, Category, GameMode, RecyclingItem } from "@/lib/recycling/types";
+import { categories } from "@/lib/recycling/data";
+import { accuracy, allCategories, nextItem, readBestScores, writeBestScores } from "@/lib/recycling/game-utils";
+import { BestScores, Category, RecyclingItem } from "@/lib/recycling/types";
+
+const maxMistakes = 5;
 
 type NarinGameProps = {
-  mode: GameMode;
   onHome: () => void;
 };
 
@@ -79,14 +80,14 @@ function DroppableBin({ category, disabled, helperText }: DroppableBinProps) {
   );
 }
 
-export function NarinGame({ mode, onHome }: NarinGameProps) {
+export function NarinGame({ onHome }: NarinGameProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const [currentItem, setCurrentItem] = useState<RecyclingItem>(() => nextItem());
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(challengeSeconds);
-  const [feedback, setFeedback] = useState(modeSummary(mode));
+  const [mistakes, setMistakes] = useState(0);
+  const [feedback, setFeedback] = useState("카드를 끌어서 맞는 통에 넣어보세요. 5번 틀리면 게임이 끝나요!");
   const [isFinished, setIsFinished] = useState(false);
   const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores("narin"));
 
@@ -94,35 +95,17 @@ export function NarinGame({ mode, onHome }: NarinGameProps) {
     writeBestScores("narin", bestScores);
   }, [bestScores]);
 
-  useEffect(() => {
-    if (mode !== "challenge" || isFinished) return;
-
-    const timer = window.setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(timer);
-          setIsFinished(true);
-          setFeedback("게임 종료! 다시 도전해서 콤보 기록을 더 늘려보세요.");
-          return 0;
-        }
-
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [isFinished, mode]);
-
   const accuracyValue = useMemo(() => accuracy(score, questionCount), [questionCount, score]);
-  const bestScore = Math.max(bestScores[mode], score);
+  const bestScore = Math.max(bestScores.practice, score);
+  const remainingChances = Math.max(0, maxMistakes - mistakes);
 
   const restart = () => {
     setCurrentItem(nextItem());
     setScore(0);
     setStreak(0);
     setQuestionCount(0);
-    setSecondsLeft(challengeSeconds);
-    setFeedback(modeSummary(mode));
+    setMistakes(0);
+    setFeedback("카드를 끌어서 맞는 통에 넣어보세요. 5번 틀리면 게임이 끝나요!");
     setIsFinished(false);
   };
 
@@ -139,18 +122,32 @@ export function NarinGame({ mode, onHome }: NarinGameProps) {
       setScore(nextScoreValue);
       setStreak(nextStreak);
       setBestScores((prev) =>
-        nextScoreValue > prev[mode] ? { ...prev, [mode]: nextScoreValue } : prev
+        nextScoreValue > prev.practice ? { ...prev, practice: nextScoreValue } : prev
       );
       setFeedback(
         `정답! ${currentItem.name}는 ${answerInfo.label} 통입니다. ${currentItem.fact} ${
           nextStreak >= 2 ? `현재 ${nextStreak}콤보예요!` : ""
         }`
       );
-    } else {
-      setStreak(0);
-      setFeedback(`아쉬워요! ${currentItem.name}는 ${answerInfo.label} 통이에요. ${currentItem.tip}`);
+      setCurrentItem(nextItem(currentItem));
+      return;
     }
 
+    const nextMistakes = mistakes + 1;
+    setMistakes(nextMistakes);
+    setStreak(0);
+
+    if (nextMistakes >= maxMistakes) {
+      setIsFinished(true);
+      setFeedback(
+        `다섯 번 틀려서 게임 종료! ${currentItem.name}는 ${answerInfo.label} 통이에요. 다시 시작해서 기록을 깨보세요.`
+      );
+      return;
+    }
+
+    setFeedback(
+      `아쉬워요! ${currentItem.name}는 ${answerInfo.label} 통이에요. ${currentItem.tip} 이제 ${maxMistakes - nextMistakes}번 더 틀리면 끝나요.`
+    );
     setCurrentItem(nextItem(currentItem));
   };
 
@@ -167,7 +164,8 @@ export function NarinGame({ mode, onHome }: NarinGameProps) {
         score={score}
         accuracy={accuracyValue}
         streak={streak}
-        timeLabel={mode === "challenge" ? `${secondsLeft}s` : "∞"}
+        mistakes={mistakes}
+        remainingChances={remainingChances}
         bestScore={bestScore}
         accentClassName="bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700"
       />
@@ -177,7 +175,7 @@ export function NarinGame({ mode, onHome }: NarinGameProps) {
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-500">나린이 버전</p>
           <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">카드를 끌어다 쓰레기통에 넣어보세요!</h2>
           <p className="mt-3 text-base leading-7 text-slate-600">
-            진짜 게임처럼 화면을 크게 쓰고, 점수와 콤보를 모으는 방식이에요.
+            시간 제한은 없고, 다섯 번 틀리기 전에 최대한 많이 맞히는 방식이에요.
           </p>
 
           <div className="mt-6">
@@ -209,14 +207,14 @@ export function NarinGame({ mode, onHome }: NarinGameProps) {
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
               <li>• 큰 카드와 큰 쓰레기통으로 진짜 게임처럼 플레이해요.</li>
               <li>• 연속 정답이 이어지면 콤보가 쌓여 성취감이 커져요.</li>
-              <li>• 60초 도전 모드에서는 집중력과 반응 속도까지 함께 길러요.</li>
+              <li>• 시간 제한은 없고, 5번 틀리면 게임이 종료돼요.</li>
             </ul>
           </section>
 
           {isFinished ? (
             <ResultPanel
-              title="나린이 도전 완료!"
-              body="좋은 플레이였어요. 다시 시작해서 더 높은 점수와 콤보를 만들어봐요."
+              title="나린이 게임 종료!"
+              body="이번엔 다섯 번 틀려서 끝났어요. 다시 시작해서 더 긴 콤보를 노려봐요."
               score={score}
               accuracy={accuracyValue}
               onRetry={restart}

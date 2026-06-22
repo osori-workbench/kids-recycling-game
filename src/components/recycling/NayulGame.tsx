@@ -2,25 +2,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { categories, challengeSeconds } from "@/lib/recycling/data";
-import { accuracy, buildQuestionSet, modeSummary, readBestScores, writeBestScores } from "@/lib/recycling/game-utils";
-import { Category, BestScores, GameMode, QuestionSet } from "@/lib/recycling/types";
+import { categories } from "@/lib/recycling/data";
+import { accuracy, buildQuestionSet, readBestScores, writeBestScores } from "@/lib/recycling/game-utils";
+import { BestScores, Category, QuestionSet } from "@/lib/recycling/types";
 import { RecyclingBinButton } from "@/components/recycling/RecyclingBinButton";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
 import { ScoreBoard } from "@/components/recycling/ScoreBoard";
 
+const maxMistakes = 5;
+
 type NayulGameProps = {
-  mode: GameMode;
   onHome: () => void;
 };
 
-export function NayulGame({ mode, onHome }: NayulGameProps) {
+export function NayulGame({ onHome }: NayulGameProps) {
   const [question, setQuestion] = useState<QuestionSet>(() => buildQuestionSet());
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
-  const [feedback, setFeedback] = useState(modeSummary(mode));
-  const [secondsLeft, setSecondsLeft] = useState(challengeSeconds);
+  const [mistakes, setMistakes] = useState(0);
+  const [feedback, setFeedback] = useState("천천히 보고, 맞는 통을 톡 눌러보세요. 5번 틀리면 게임이 끝나요!");
   const [isFinished, setIsFinished] = useState(false);
   const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores("nayul"));
 
@@ -28,35 +29,17 @@ export function NayulGame({ mode, onHome }: NayulGameProps) {
     writeBestScores("nayul", bestScores);
   }, [bestScores]);
 
-  useEffect(() => {
-    if (mode !== "challenge" || isFinished) return;
-
-    const timer = window.setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(timer);
-          setIsFinished(true);
-          setFeedback("시간이 끝났어요! 다시 해보면 더 많은 물건을 맞힐 수 있어요.");
-          return 0;
-        }
-
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [isFinished, mode]);
-
   const accuracyValue = useMemo(() => accuracy(score, questionCount), [questionCount, score]);
-  const bestScore = Math.max(bestScores[mode], score);
+  const bestScore = Math.max(bestScores.practice, score);
+  const remainingChances = Math.max(0, maxMistakes - mistakes);
 
   const restart = () => {
     setQuestion(buildQuestionSet());
     setScore(0);
     setStreak(0);
     setQuestionCount(0);
-    setFeedback(modeSummary(mode));
-    setSecondsLeft(challengeSeconds);
+    setMistakes(0);
+    setFeedback("천천히 보고, 맞는 통을 톡 눌러보세요. 5번 틀리면 게임이 끝나요!");
     setIsFinished(false);
   };
 
@@ -72,13 +55,29 @@ export function NayulGame({ mode, onHome }: NayulGameProps) {
       const nextScore = score + 1;
       setScore(nextScore);
       setStreak((prev) => prev + 1);
-      setBestScores((prev) => (nextScore > prev[mode] ? { ...prev, [mode]: nextScore } : prev));
+      setBestScores((prev) =>
+        nextScore > prev.practice ? { ...prev, practice: nextScore } : prev
+      );
       setFeedback(`정답! ${question.item.name}는 ${answerInfo.label} 통으로 가요. ${question.item.fact}`);
-    } else {
-      setStreak(0);
-      setFeedback(`아쉬워요! ${question.item.name}는 ${answerInfo.label} 통이에요. ${question.item.tip}`);
+      setQuestion(buildQuestionSet(question.item.name));
+      return;
     }
 
+    const nextMistakes = mistakes + 1;
+    setMistakes(nextMistakes);
+    setStreak(0);
+
+    if (nextMistakes >= maxMistakes) {
+      setIsFinished(true);
+      setFeedback(
+        `다섯 번 틀려서 게임이 끝났어요. ${question.item.name}는 ${answerInfo.label} 통이에요. 다시 해보면 더 잘할 수 있어요!`
+      );
+      return;
+    }
+
+    setFeedback(
+      `아쉬워요! ${question.item.name}는 ${answerInfo.label} 통이에요. ${question.item.tip} 이제 ${maxMistakes - nextMistakes}번 더 틀리면 끝나요.`
+    );
     setQuestion(buildQuestionSet(question.item.name));
   };
 
@@ -89,7 +88,8 @@ export function NayulGame({ mode, onHome }: NayulGameProps) {
         score={score}
         accuracy={accuracyValue}
         streak={streak}
-        timeLabel={mode === "challenge" ? `${secondsLeft}s` : "∞"}
+        mistakes={mistakes}
+        remainingChances={remainingChances}
         bestScore={bestScore}
         accentClassName="bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400"
       />
@@ -130,14 +130,14 @@ export function NayulGame({ mode, onHome }: NayulGameProps) {
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
               <li>• 읽기보다 보기에 집중할 수 있도록 큰 그림 카드로 보여줘요.</li>
               <li>• 선택지는 3개만 보여줘서 더 쉽게 고를 수 있어요.</li>
-              <li>• 틀려도 바로 정답을 알려줘서 학습 흐름이 끊기지 않아요.</li>
+              <li>• 시간 제한은 없고, 5번 틀리면 게임이 끝나요.</li>
             </ul>
           </section>
 
           {isFinished ? (
             <ResultPanel
-              title="나율이 도전 완료!"
-              body="너무 잘했어요. 다시 한 번 도전해서 더 높은 점수를 노려볼까요?"
+              title="나율이 게임 종료!"
+              body="다섯 번 틀리면 끝나는 규칙으로 바뀌었어요. 다시 도전해서 더 오래 버텨볼까요?"
               score={score}
               accuracy={accuracyValue}
               onRetry={restart}

@@ -1,5 +1,18 @@
+import Image from "next/image";
+
 import { versionInfo } from "@/lib/recycling/data";
 import { GameVersion } from "@/lib/recycling/types";
+
+const versionImages: Record<GameVersion, { src: string; alt: string }> = {
+  nayul: {
+    src: "/assets/nayul.png",
+    alt: "나율이 버전 소개 이미지",
+  },
+  narin: {
+    src: "/assets/narin.png",
+    alt: "나린이 버전 소개 이미지",
+  },
+};
 
 type VersionSelectorProps = {
   selectedVersion: GameVersion | null;
@@ -26,6 +39,7 @@ export function VersionSelector({ selectedVersion, onSelect }: VersionSelectorPr
         {(Object.entries(versionInfo) as [GameVersion, (typeof versionInfo)[GameVersion]][]).map(
           ([version, info]) => {
             const selected = selectedVersion === version;
+            const image = versionImages[version];
 
             return (
               <button
@@ -41,7 +55,18 @@ export function VersionSelector({ selectedVersion, onSelect }: VersionSelectorPr
                     selected ? "ring-transparent" : "ring-slate-100"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="relative overflow-hidden rounded-[1.5rem] bg-white/70">
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      width={1200}
+                      height={900}
+                      className="h-64 w-full object-cover"
+                      priority={version === "nayul"}
+                    />
+                  </div>
+
+                  <div className="mt-5 flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-slate-500">{info.difficultyLabel}</p>
                       <h2 className="mt-2 text-3xl font-black text-slate-900">{info.label}</h2>
