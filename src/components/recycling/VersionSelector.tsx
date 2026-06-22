@@ -3,10 +3,11 @@ import Image from "next/image";
 import { versionInfo } from "@/lib/recycling/data";
 import { GameVersion } from "@/lib/recycling/types";
 
-const versionImages: Record<GameVersion, { src: string; alt: string }> = {
+const versionImages: Record<GameVersion, { src: string; alt: string; className?: string }> = {
   nayul: {
     src: "/assets/nayul.png",
     alt: "나율이 버전 소개 이미지",
+    className: "object-[center_62%]",
   },
   narin: {
     src: "/assets/narin.png",
@@ -60,7 +61,7 @@ export function VersionSelector({ selectedVersion, onSelect }: VersionSelectorPr
                       alt={image.alt}
                       width={1200}
                       height={900}
-                      className="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-80"
+                      className={`h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-80 ${image.className ?? ""}`}
                       priority={version === "nayul"}
                     />
                     <div className="absolute inset-x-4 bottom-4 inline-flex w-fit rounded-full bg-black/55 px-4 py-2 text-sm font-bold text-white backdrop-blur">

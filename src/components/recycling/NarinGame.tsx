@@ -31,7 +31,6 @@ type DraggableCardProps = {
 type DroppableBinProps = {
   category: Category;
   disabled: boolean;
-  helperText: string;
 };
 
 type ToastState = {
@@ -132,7 +131,7 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
   );
 }
 
-function DroppableBin({ category, disabled, helperText }: DroppableBinProps) {
+function DroppableBin({ category, disabled }: DroppableBinProps) {
   const info = categories[category];
   const { isOver, setNodeRef } = useDroppable({
     id: category,
@@ -143,14 +142,10 @@ function DroppableBin({ category, disabled, helperText }: DroppableBinProps) {
     <div ref={setNodeRef} className={`${isOver ? "scale-[1.02]" : ""} transition`}>
       <RecyclingBinButton
         info={info}
-        label={helperText}
         disabled={disabled}
+        compact
         className={isOver ? "shadow-2xl ring-4 ring-sky-200" : ""}
-      >
-        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-600">
-          여기에 놓기
-        </div>
-      </RecyclingBinButton>
+      />
     </div>
   );
 }
@@ -274,13 +269,12 @@ export function NarinGame() {
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <DraggableCard key={currentItem.name} item={currentItem} disabled={interactionLocked} />
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {allCategories().map((category) => (
                 <DroppableBin
                   key={category}
                   category={category}
                   disabled={interactionLocked}
-                  helperText="끌어다 놓기"
                 />
               ))}
             </div>
