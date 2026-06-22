@@ -9,7 +9,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RecyclingBinButton } from "@/components/recycling/RecyclingBinButton";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
@@ -36,12 +36,61 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
     id: "recycling-item",
     disabled,
   });
+  const [renderedOffset, setRenderedOffset] = useState({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
+  const targetRef = useRef({ x: 0, y: 0 });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  useEffect(() => {
+    targetRef.current = {
+      x: transform?.x ?? 0,
+      y: transform?.y ?? 0,
+    };
+
+    if (rafRef.current !== null) {
+      return;
+    }
+
+    const animate = () => {
+      let shouldContinue = false;
+
+      setRenderedOffset((prev) => {
+        const dx = targetRef.current.x - prev.x;
+        const dy = targetRef.current.y - prev.y;
+
+        const next = {
+          x: Math.abs(dx) < 0.5 ? targetRef.current.x : prev.x + dx * 0.18,
+          y: Math.abs(dy) < 0.5 ? targetRef.current.y : prev.y + dy * 0.18,
+        };
+
+        shouldContinue =
+          Math.abs(targetRef.current.x - next.x) > 0.5 ||
+          Math.abs(targetRef.current.y - next.y) > 0.5 ||
+          isDragging;
+
+        return next;
+      });
+
+      if (shouldContinue) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        rafRef.current = null;
       }
-    : undefined;
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+  }, [isDragging, transform]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  const style = {
+    transform: `translate3d(${renderedOffset.x}px, ${renderedOffset.y}px, 0)`,
+  };
 
   return (
     <div
@@ -49,16 +98,24 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`rounded-[2.25rem] border border-sky-100 bg-gradient-to-br from-cyan-50 via-sky-50 to-indigo-50 p-8 text-center shadow-[0_18px_60px_rgba(52,84,104,0.12)] transition sm:p-12 ${
+      className={`touch-none select-none rounded-[2rem] border border-sky-100 bg-gradient-to-r from-cyan-50 via-sky-50 to-indigo-50 p-5 shadow-[0_18px_60px_rgba(52,84,104,0.12)] transition sm:p-6 ${
         disabled ? "opacity-60" : "cursor-grab active:cursor-grabbing"
-      } ${isDragging ? "scale-105 shadow-2xl" : ""}`}
+      } ${isDragging ? "scale-[1.02] shadow-2xl" : ""}`}
     >
       <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-500">드래그 카드</p>
-      <div className="mt-5 text-8xl sm:text-9xl lg:text-[10rem]">{item.emoji}</div>
-      <h3 className="mt-4 text-4xl font-black text-slate-900 sm:text-5xl lg:text-6xl">{item.name}</h3>
-      <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-        카드를 꾹 누르거나 잡고 아래 쓰레기통으로 끌어다 놓아보세요.
-      </p>
+
+      <div className="mt-4 flex items-center gap-4 sm:gap-6">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.5rem] bg-white/75 text-6xl shadow-sm sm:h-28 sm:w-28 sm:text-7xl">
+          {item.emoji}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h3 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">{item.name}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+            카드를 잡고 아래 쓰레기통으로 천천히 끌어다 놓아보세요.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -87,7 +144,7 @@ function DroppableBin({ category, disabled, helperText }: DroppableBinProps) {
 }
 
 export function NarinGame() {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const [currentItem, setCurrentItem] = useState<RecyclingItem>(() => nextItem());
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
