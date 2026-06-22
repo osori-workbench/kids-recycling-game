@@ -16,10 +16,28 @@ export default function Home() {
 
   const isPlaying = Boolean(hasStarted && selectedVersion);
 
+  const tryPlayBgm = async ({ fromStart = false }: { fromStart?: boolean } = {}) => {
+    if (!audioRef.current) return;
+
+    try {
+      audioRef.current.loop = true;
+      audioRef.current.muted = false;
+
+      if (fromStart) {
+        audioRef.current.currentTime = 0;
+      }
+
+      await audioRef.current.play();
+    } catch {
+      // 브라우저 자동재생 제한이 있을 수 있으므로 controls도 함께 제공
+    }
+  };
+
   const handleStartVersion = (version: GameVersion) => {
     setSelectedVersion(version);
     setHasStarted(true);
     setGameSessionKey((prev) => prev + 1);
+    void tryPlayBgm({ fromStart: true });
   };
 
   const resetToHome = () => {
@@ -29,15 +47,7 @@ export default function Home() {
 
   const restartCurrentGame = () => {
     setGameSessionKey((prev) => prev + 1);
-  };
-
-  const tryPlayBgm = async () => {
-    if (!audioRef.current) return;
-    try {
-      await audioRef.current.play();
-    } catch {
-      // 브라우저 자동재생 제한이 있을 수 있으므로 조용히 무시하고 controls 사용
-    }
+    void tryPlayBgm();
   };
 
   return (
@@ -92,11 +102,11 @@ export default function Home() {
               src="/assets/family-bgm.mp3"
               controls
               loop
-              autoPlay
+              preload="auto"
             />
             <button
               type="button"
-              onClick={tryPlayBgm}
+              onClick={() => void tryPlayBgm()}
               className="rounded-full bg-violet-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-600"
             >
               재생

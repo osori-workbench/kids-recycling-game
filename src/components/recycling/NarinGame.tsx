@@ -263,7 +263,7 @@ export function NarinGame() {
 
         <div className="mt-6">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <DraggableCard item={currentItem} disabled={interactionLocked} />
+            <DraggableCard key={currentItem.name} item={currentItem} disabled={interactionLocked} />
 
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {allCategories().map((category) => (
