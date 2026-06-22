@@ -20,35 +20,35 @@ export function ScoreBoard({
   accentClassName = "bg-slate-900",
 }: ScoreBoardProps) {
   return (
-    <section className={`grid gap-4 rounded-[2rem] p-6 text-white shadow-2xl ${accentClassName}`}>
-      <div className="flex items-center justify-between gap-4">
+    <section className={`grid gap-3 rounded-[1.75rem] px-5 py-4 text-white shadow-2xl ${accentClassName}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/60">게임 현황</p>
-          <h2 className="mt-2 text-2xl font-black">{title}</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">게임 현황</p>
+          <h2 className="mt-1 text-xl font-black sm:text-2xl">{title}</h2>
         </div>
-        <div className="rounded-full bg-white/15 px-4 py-2 text-sm font-bold">최고 기록 {bestScore}점</div>
+        <div className="rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold">최고 기록 {bestScore}점</div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <div className="rounded-[1.5rem] bg-white/10 p-4">
-          <p className="text-sm text-white/70">점수</p>
-          <p className="mt-1 text-3xl font-black">{score}</p>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        <div className="rounded-[1.25rem] bg-white/10 px-3 py-3">
+          <p className="text-xs text-white/70">점수</p>
+          <p className="mt-1 text-2xl font-black sm:text-3xl">{score}</p>
         </div>
-        <div className="rounded-[1.5rem] bg-white/10 p-4">
-          <p className="text-sm text-white/70">정확도</p>
-          <p className="mt-1 text-3xl font-black">{accuracy}%</p>
+        <div className="rounded-[1.25rem] bg-white/10 px-3 py-3">
+          <p className="text-xs text-white/70">정확도</p>
+          <p className="mt-1 text-2xl font-black sm:text-3xl">{accuracy}%</p>
         </div>
-        <div className="rounded-[1.5rem] bg-white/10 p-4">
-          <p className="text-sm text-white/70">콤보</p>
-          <p className="mt-1 text-3xl font-black">{streak}</p>
+        <div className="rounded-[1.25rem] bg-white/10 px-3 py-3">
+          <p className="text-xs text-white/70">콤보</p>
+          <p className="mt-1 text-2xl font-black sm:text-3xl">{streak}</p>
         </div>
-        <div className="rounded-[1.5rem] bg-white/10 p-4">
-          <p className="text-sm text-white/70">틀린 횟수</p>
-          <p className="mt-1 text-3xl font-black">{mistakes}</p>
+        <div className="rounded-[1.25rem] bg-white/10 px-3 py-3">
+          <p className="text-xs text-white/70">오답</p>
+          <p className="mt-1 text-2xl font-black sm:text-3xl">{mistakes}</p>
         </div>
-        <div className="rounded-[1.5rem] bg-white/10 p-4">
-          <p className="text-sm text-white/70">남은 기회</p>
-          <p className="mt-1 text-3xl font-black">{remainingChances}</p>
+        <div className="rounded-[1.25rem] bg-white/10 px-3 py-3">
+          <p className="text-xs text-white/70">남은 기회</p>
+          <p className="mt-1 text-2xl font-black sm:text-3xl">{remainingChances}</p>
         </div>
       </div>
     </section>

@@ -30,12 +30,11 @@ export function VersionSelector({ selectedVersion, onSelect }: VersionSelectorPr
           분리수거 탐험대
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-600">
-          아이 성향에 맞게 <strong>나율이 버전</strong>과 <strong>나린이 버전</strong>으로 나누어
-          플레이할 수 있도록 구성했어요.
+          원하는 버전을 큰 영역으로 바로 눌러서 시작할 수 있게 만들었어요.
         </p>
       </div>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+      <div className="mt-8 grid gap-5 lg:grid-cols-2">
         {(Object.entries(versionInfo) as [GameVersion, (typeof versionInfo)[GameVersion]][]).map(
           ([version, info]) => {
             const selected = selectedVersion === version;
@@ -46,45 +45,38 @@ export function VersionSelector({ selectedVersion, onSelect }: VersionSelectorPr
                 key={version}
                 type="button"
                 onClick={() => onSelect(version)}
-                className={`rounded-[2rem] p-[1px] text-left transition hover:-translate-y-1 ${
-                  selected ? `bg-gradient-to-br ${info.accent}` : "bg-slate-200"
+                className={`group rounded-[2.25rem] p-[2px] text-left transition duration-200 hover:-translate-y-1 hover:shadow-2xl ${
+                  info.accent
                 }`}
               >
                 <div
-                  className={`h-full rounded-[calc(2rem-1px)] p-6 ring-1 ${info.cardClassName} ${
-                    selected ? "ring-transparent" : "ring-slate-100"
+                  className={`h-full rounded-[calc(2.25rem-2px)] p-6 ring-1 ${info.cardClassName} ${
+                    selected ? "ring-white/80" : "ring-white/60"
                   }`}
                 >
-                  <div className="relative overflow-hidden rounded-[1.5rem] bg-white/70">
+                  <div className="relative overflow-hidden rounded-[1.75rem] bg-white/70">
                     <Image
                       src={image.src}
                       alt={image.alt}
                       width={1200}
                       height={900}
-                      className="h-64 w-full object-cover"
+                      className="h-72 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-80"
                       priority={version === "nayul"}
                     />
+                    <div className="absolute inset-x-4 bottom-4 inline-flex w-fit rounded-full bg-black/55 px-4 py-2 text-sm font-bold text-white backdrop-blur">
+                      누르면 바로 시작
+                    </div>
                   </div>
 
                   <div className="mt-5 flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-slate-500">{info.difficultyLabel}</p>
-                      <h2 className="mt-2 text-3xl font-black text-slate-900">{info.label}</h2>
+                      <h2 className="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">{info.label}</h2>
                     </div>
-                    <div className="text-5xl">{info.emoji}</div>
+                    <div className="text-5xl sm:text-6xl">{info.emoji}</div>
                   </div>
 
                   <p className="mt-4 text-base leading-7 text-slate-700">{info.summary}</p>
-
-                  <ul className="mt-5 space-y-2 text-sm font-medium text-slate-600">
-                    {info.bullets.map((bullet) => (
-                      <li key={bullet}>• {bullet}</li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-6 inline-flex rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm">
-                    {selected ? "선택됨" : "이 버전으로 시작하기"}
-                  </div>
                 </div>
               </button>
             );

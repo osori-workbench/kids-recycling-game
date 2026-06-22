@@ -3,11 +3,9 @@ type ResultPanelProps = {
   body: string;
   score: number;
   accuracy: number;
-  onRetry: () => void;
-  onHome: () => void;
 };
 
-export function ResultPanel({ title, body, score, accuracy, onRetry, onHome }: ResultPanelProps) {
+export function ResultPanel({ title, body, score, accuracy }: ResultPanelProps) {
   return (
     <section className="rounded-[2rem] bg-rose-50 p-6 ring-1 ring-rose-100 sm:p-8">
       <p className="text-sm font-bold uppercase tracking-[0.25em] text-rose-500">게임 종료</p>
@@ -23,23 +21,6 @@ export function ResultPanel({ title, body, score, accuracy, onRetry, onHome }: R
           <p className="text-sm text-slate-500">정확도</p>
           <p className="mt-1 text-3xl font-black text-slate-900">{accuracy}%</p>
         </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onRetry}
-          className="rounded-full bg-rose-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-600"
-        >
-          다시 도전하기
-        </button>
-        <button
-          type="button"
-          onClick={onHome}
-          className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-900 ring-1 ring-slate-200 transition hover:-translate-y-0.5"
-        >
-          홈으로 돌아가기
-        </button>
       </div>
     </section>
   );
