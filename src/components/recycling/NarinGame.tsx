@@ -9,8 +9,10 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FeedbackToast } from "@/components/recycling/FeedbackToast";
 import { RecyclingBinButton } from "@/components/recycling/RecyclingBinButton";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
 import { ScoreBoard } from "@/components/recycling/ScoreBoard";
@@ -19,7 +21,7 @@ import { accuracy, allCategories, nextItem, readBestScores, writeBestScores } fr
 import { BestScores, Category, RecyclingItem } from "@/lib/recycling/types";
 
 const maxMistakes = 5;
-const toastDurationMs = 1400;
+const toastDurationMs = 1200;
 
 type DraggableCardProps = {
   item: RecyclingItem;
@@ -111,8 +113,15 @@ function DraggableCard({ item, disabled }: DraggableCardProps) {
       <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-500">드래그 카드</p>
 
       <div className="mt-4 flex items-center gap-4 sm:gap-6">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.5rem] bg-white/75 text-6xl shadow-sm sm:h-28 sm:w-28 sm:text-7xl">
-          {item.emoji}
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[1.5rem] bg-white shadow-sm sm:h-28 sm:w-28">
+          <Image
+            src={item.imageSrc}
+            alt={item.name}
+            fill
+            className="object-contain p-2"
+            sizes="(max-width: 640px) 96px, 112px"
+            priority
+          />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -278,19 +287,7 @@ export function NarinGame() {
           </DndContext>
         </div>
 
-        {toast ? (
-          <div className="pointer-events-none fixed inset-x-0 top-24 z-30 flex justify-center px-4">
-            <div
-              className={`max-w-2xl rounded-[1.5rem] px-6 py-4 text-center text-base font-black text-white shadow-2xl backdrop-blur sm:text-lg ${
-                toast.tone === "success"
-                  ? "bg-emerald-500/95 shadow-emerald-200"
-                  : "bg-rose-500/95 shadow-rose-200"
-              }`}
-            >
-              {toast.message}
-            </div>
-          </div>
-        ) : null}
+        {toast ? <FeedbackToast message={toast.message} tone={toast.tone} /> : null}
       </div>
 
       {isFinished ? (

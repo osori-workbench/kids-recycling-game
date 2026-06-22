@@ -50,6 +50,7 @@ export const items: RecyclingItem[] = [
   {
     name: "신문지",
     emoji: "📰",
+    imageSrc: "/assets/items/newspaper.svg",
     category: "paper",
     fact: "신문지는 종이류예요. 차곡차곡 모아 버리면 재활용이 쉬워져요.",
     tip: "젖지 않게 묶어서 버리면 더 좋아요.",
@@ -57,6 +58,7 @@ export const items: RecyclingItem[] = [
   {
     name: "택배 상자",
     emoji: "📦",
+    imageSrc: "/assets/items/box.svg",
     category: "paper",
     fact: "상자는 테이프를 떼고 접어서 버리면 좋아요.",
     tip: "상자를 납작하게 접어 부피를 줄여보세요.",
@@ -64,13 +66,23 @@ export const items: RecyclingItem[] = [
   {
     name: "우유팩",
     emoji: "🥛",
+    imageSrc: "/assets/items/milk-carton.svg",
     category: "paper",
     fact: "우유팩은 깨끗이 씻고 말리면 종이류로 분리할 수 있어요.",
     tip: "안쪽까지 헹군 뒤 펼쳐 말리면 더 좋아요.",
   },
   {
+    name: "종이컵",
+    emoji: "🥤",
+    imageSrc: "/assets/items/paper-cup.svg",
+    category: "paper",
+    fact: "깨끗한 종이컵은 종이류로 분리할 수 있어요.",
+    tip: "남은 음료를 비우고 헹군 뒤 버리세요.",
+  },
+  {
     name: "플라스틱 물병",
-    emoji: "💧",
+    emoji: "🧴",
+    imageSrc: "/assets/items/plastic-bottle.svg",
     category: "plastic",
     fact: "물병은 대표적인 플라스틱 재활용 품목이에요.",
     tip: "라벨을 떼고 찌그러뜨리면 좋아요.",
@@ -78,6 +90,7 @@ export const items: RecyclingItem[] = [
   {
     name: "샴푸통",
     emoji: "🧴",
+    imageSrc: "/assets/items/shampoo-bottle.svg",
     category: "plastic",
     fact: "샴푸통은 내용물을 비우고 헹구면 플라스틱으로 분리할 수 있어요.",
     tip: "펌프는 다른 재질이면 따로 분리해보세요.",
@@ -85,13 +98,23 @@ export const items: RecyclingItem[] = [
   {
     name: "요거트 통",
     emoji: "🥣",
+    imageSrc: "/assets/items/yogurt-cup.svg",
     category: "plastic",
     fact: "요거트 통은 음식물이 남지 않게 씻는 게 중요해요.",
     tip: "끈적한 내용물을 잘 헹군 뒤 버리세요.",
   },
   {
+    name: "세제통",
+    emoji: "🧼",
+    imageSrc: "/assets/items/detergent-bottle.svg",
+    category: "plastic",
+    fact: "세제통도 플라스틱 재질이면 깨끗이 비운 뒤 분리해요.",
+    tip: "캡과 몸통 재질이 다르면 나눠 버리세요.",
+  },
+  {
     name: "유리병",
     emoji: "🍾",
+    imageSrc: "/assets/items/glass-bottle.svg",
     category: "glass",
     fact: "유리병은 유리류로 다시 태어날 수 있어요.",
     tip: "뚜껑은 분리해서 다른 재질끼리 나눠 버리세요.",
@@ -99,6 +122,7 @@ export const items: RecyclingItem[] = [
   {
     name: "잼 병",
     emoji: "🫙",
+    imageSrc: "/assets/items/jam-jar.svg",
     category: "glass",
     fact: "잼 병도 안쪽을 씻고 유리함에 넣어요.",
     tip: "음식물이 남지 않게 닦아주세요.",
@@ -106,13 +130,23 @@ export const items: RecyclingItem[] = [
   {
     name: "유리 음료수병",
     emoji: "🍹",
+    imageSrc: "/assets/items/soda-bottle.svg",
     category: "glass",
-    fact: "유리병은 깨지지 않게 조심히 버려야 해요.",
+    fact: "유리 음료수병은 깨지지 않게 조심히 버려야 해요.",
     tip: "깨진 유리는 다치지 않게 안전하게 따로 처리하세요.",
+  },
+  {
+    name: "와인병",
+    emoji: "🍷",
+    imageSrc: "/assets/items/wine-bottle.svg",
+    category: "glass",
+    fact: "와인병도 대표적인 유리 재활용 품목이에요.",
+    tip: "코르크나 캡은 따로 떼고 버리면 더 좋아요.",
   },
   {
     name: "음료수 캔",
     emoji: "🥫",
+    imageSrc: "/assets/items/can.svg",
     category: "metal",
     fact: "알루미늄 캔은 금속 재활용의 대표 선수예요.",
     tip: "헹군 뒤 살짝 눌러 버리면 공간을 아낄 수 있어요.",
@@ -120,6 +154,7 @@ export const items: RecyclingItem[] = [
   {
     name: "통조림 캔",
     emoji: "🥫",
+    imageSrc: "/assets/items/tuna-can.svg",
     category: "metal",
     fact: "통조림 캔도 금속류예요.",
     tip: "날카로운 부분에 손이 베이지 않게 조심하세요.",
@@ -127,13 +162,23 @@ export const items: RecyclingItem[] = [
   {
     name: "금속 뚜껑",
     emoji: "⚙️",
+    imageSrc: "/assets/items/metal-lid.svg",
     category: "metal",
     fact: "병뚜껑처럼 금속 재질은 금속류로 분리해요.",
     tip: "플라스틱 몸통과 분리하면 더 정확해져요.",
   },
   {
+    name: "냄비",
+    emoji: "🍳",
+    imageSrc: "/assets/items/steel-pot.svg",
+    category: "metal",
+    fact: "작은 금속 냄비나 스테인리스 용기는 금속류로 분리할 수 있어요.",
+    tip: "플라스틱 손잡이처럼 다른 재질은 분리하면 더 좋아요.",
+  },
+  {
     name: "바나나 껍질",
     emoji: "🍌",
+    imageSrc: "/assets/items/banana-peel.svg",
     category: "food",
     fact: "바나나 껍질은 음식물 쓰레기통으로 가요.",
     tip: "물기를 줄이면 처리하기가 쉬워져요.",
@@ -141,6 +186,7 @@ export const items: RecyclingItem[] = [
   {
     name: "사과 껍질",
     emoji: "🍎",
+    imageSrc: "/assets/items/apple-peel.svg",
     category: "food",
     fact: "사과 껍질도 음식물류예요.",
     tip: "포장 비닐은 꼭 따로 분리하세요.",
@@ -148,9 +194,26 @@ export const items: RecyclingItem[] = [
   {
     name: "남은 밥",
     emoji: "🍚",
+    imageSrc: "/assets/items/rice-bowl.svg",
     category: "food",
     fact: "먹고 남은 밥은 음식물류로 분리해요.",
     tip: "숟가락이나 젓가락이 섞이지 않게 빼주세요.",
+  },
+  {
+    name: "식빵 조각",
+    emoji: "🍞",
+    imageSrc: "/assets/items/bread.svg",
+    category: "food",
+    fact: "남은 빵 조각도 음식물 쓰레기로 버릴 수 있어요.",
+    tip: "포장 비닐과 묶음끈은 꼭 빼고 버리세요.",
+  },
+  {
+    name: "달걀 껍데기",
+    emoji: "🥚",
+    imageSrc: "/assets/items/egg-shell.svg",
+    category: "food",
+    fact: "달걀 껍데기는 아이에게 헷갈릴 수 있지만 여기서는 음식물 예시로 함께 배워요.",
+    tip: "지역 분리 기준이 다를 수 있어 집 규칙도 함께 확인해보세요.",
   },
 ];
 

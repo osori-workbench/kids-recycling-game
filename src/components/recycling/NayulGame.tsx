@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { FeedbackToast } from "@/components/recycling/FeedbackToast";
 import { RecyclingBinButton } from "@/components/recycling/RecyclingBinButton";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
 import { ScoreBoard } from "@/components/recycling/ScoreBoard";
@@ -10,6 +12,12 @@ import { accuracy, buildQuestionSet, readBestScores, writeBestScores } from "@/l
 import { BestScores, Category, QuestionSet } from "@/lib/recycling/types";
 
 const maxMistakes = 5;
+const toastDurationMs = 1200;
+
+type ToastState = {
+  message: string;
+  tone: "success" | "error";
+};
 
 export function NayulGame() {
   const [question, setQuestion] = useState<QuestionSet>(() => buildQuestionSet());
@@ -17,35 +25,64 @@ export function NayulGame() {
   const [streak, setStreak] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [mistakes, setMistakes] = useState(0);
-  const [feedback, setFeedback] = useState("천천히 보고, 맞는 통을 톡 눌러보세요. 5번 틀리면 게임이 끝나요!");
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores("nayul"));
+  const toastTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     writeBestScores("nayul", bestScores);
   }, [bestScores]);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current !== null) {
+        window.clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const accuracyValue = useMemo(() => accuracy(score, questionCount), [questionCount, score]);
   const bestScore = Math.max(bestScores.practice, score);
   const remainingChances = Math.max(0, maxMistakes - mistakes);
+  const interactionLocked = isFinished || toast !== null;
+
+  const showToastThen = (nextToast: ToastState, afterToast?: () => void) => {
+    if (toastTimeoutRef.current !== null) {
+      window.clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast(nextToast);
+    toastTimeoutRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+      afterToast?.();
+    }, toastDurationMs);
+  };
 
   const handleAnswer = (selectedCategory: Category) => {
-    if (isFinished) return;
+    if (interactionLocked) return;
 
     const correct = selectedCategory === question.item.category;
     const answerInfo = categories[question.item.category];
-
     setQuestionCount((prev) => prev + 1);
 
     if (correct) {
       const nextScore = score + 1;
+      const nextStreak = streak + 1;
+      const nextQuestion = buildQuestionSet(question.item.name);
+
       setScore(nextScore);
-      setStreak((prev) => prev + 1);
-      setBestScores((prev) =>
-        nextScore > prev.practice ? { ...prev, practice: nextScore } : prev
+      setStreak(nextStreak);
+      setBestScores((prev) => (nextScore > prev.practice ? { ...prev, practice: nextScore } : prev));
+
+      showToastThen(
+        {
+          tone: "success",
+          message: `정답! ${question.item.name}는 ${answerInfo.label} 통으로 가요.${nextStreak >= 2 ? ` ${nextStreak}콤보!` : ""}`,
+        },
+        () => setQuestion(nextQuestion)
       );
-      setFeedback(`정답! ${question.item.name}는 ${answerInfo.label} 통으로 가요. ${question.item.fact}`);
-      setQuestion(buildQuestionSet(question.item.name));
       return;
     }
 
@@ -55,16 +92,21 @@ export function NayulGame() {
 
     if (nextMistakes >= maxMistakes) {
       setIsFinished(true);
-      setFeedback(
-        `다섯 번 틀려서 게임이 끝났어요. ${question.item.name}는 ${answerInfo.label} 통이에요. 다시 해보면 더 잘할 수 있어요!`
-      );
+      showToastThen({
+        tone: "error",
+        message: `아쉬워요! ${question.item.name}는 ${answerInfo.label} 통이에요. 다섯 번 틀려서 게임 종료예요.`,
+      });
       return;
     }
 
-    setFeedback(
-      `아쉬워요! ${question.item.name}는 ${answerInfo.label} 통이에요. ${question.item.tip} 이제 ${maxMistakes - nextMistakes}번 더 틀리면 끝나요.`
+    const nextQuestion = buildQuestionSet(question.item.name);
+    showToastThen(
+      {
+        tone: "error",
+        message: `아쉬워요! ${question.item.name}는 ${answerInfo.label} 통이에요. 남은 기회 ${maxMistakes - nextMistakes}번!`,
+      },
+      () => setQuestion(nextQuestion)
     );
-    setQuestion(buildQuestionSet(question.item.name));
   };
 
   return (
@@ -80,16 +122,28 @@ export function NayulGame() {
         accentClassName="bg-gradient-to-br from-rose-500 via-pink-500 to-orange-400"
       />
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_18px_60px_rgba(52,84,104,0.12)] ring-1 ring-slate-100 sm:p-8 lg:p-10">
+      <div className="relative rounded-[2rem] bg-white p-6 shadow-[0_18px_60px_rgba(52,84,104,0.12)] ring-1 ring-slate-100 sm:p-8 lg:p-10">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-pink-400">나율이 버전</p>
-        <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">이건 어디에 버릴까요?</h2>
 
-        <div className="mt-6 rounded-[2.25rem] bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50 p-8 text-center ring-1 ring-pink-100 sm:p-12 lg:p-16">
-          <div className="text-8xl sm:text-9xl lg:text-[10rem]">{question.item.emoji}</div>
-          <h3 className="mt-5 text-4xl font-black text-slate-900 sm:text-5xl lg:text-6xl">{question.item.name}</h3>
-          <p className="mt-4 text-lg leading-8 text-slate-600 sm:text-xl">
-            그림을 보고 맞는 분리수거 통을 골라봐요!
-          </p>
+        <div className="mt-6 mx-auto w-full max-w-3xl rounded-[2rem] bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50 p-5 ring-1 ring-pink-100 sm:p-6">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-[1.5rem] bg-white shadow-sm sm:h-32 sm:w-32">
+              <Image
+                src={question.item.imageSrc}
+                alt={question.item.name}
+                fill
+                className="object-contain p-3"
+                sizes="(max-width: 640px) 112px, 128px"
+                priority
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-[2.75rem]">{question.item.name}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                그림을 보고 맞는 분리수거 통을 골라봐요!
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -98,16 +152,13 @@ export function NayulGame() {
               key={option}
               info={categories[option]}
               label="톡 눌러서 선택"
-              disabled={isFinished}
+              disabled={interactionLocked}
               onClick={() => handleAnswer(option)}
             />
           ))}
         </div>
 
-        <div className="mt-8 rounded-[1.75rem] bg-pink-50 p-5 ring-1 ring-pink-100 sm:p-6">
-          <p className="text-sm font-bold text-pink-700">학습 메시지</p>
-          <p className="mt-2 text-base leading-7 text-pink-950 sm:text-lg">{feedback}</p>
-        </div>
+        {toast ? <FeedbackToast message={toast.message} tone={toast.tone} /> : null}
       </div>
 
       {isFinished ? (

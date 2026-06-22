@@ -5,6 +5,7 @@ export type GameVersion = "nayul" | "narin";
 export type RecyclingItem = {
   name: string;
   emoji: string;
+  imageSrc: string;
   category: Category;
   fact: string;
   tip: string;
