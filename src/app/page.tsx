@@ -7,6 +7,19 @@ const games = [
     title: "분리수거 탐험대",
     description: "나율이 버전과 나린이 버전으로 배우는 가족용 분리수거 게임",
     badge: "플레이 가능",
+    accentClassName: "from-emerald-400 via-sky-400 to-violet-400",
+    iconClassName: "bg-emerald-100",
+    hoverClassName: "group-hover:bg-emerald-500",
+  },
+  {
+    href: "/games/animal-feeding",
+    emoji: "🦊",
+    title: "동물 먹이주기",
+    description: "동물 10마리에게 맞는 먹이를 드래그해서 주는 가족용 놀이 게임",
+    badge: "새 게임",
+    accentClassName: "from-amber-400 via-orange-400 to-pink-400",
+    iconClassName: "bg-orange-100",
+    hoverClassName: "group-hover:bg-orange-500",
   },
 ];
 
@@ -33,12 +46,12 @@ export default function Home() {
               <Link
                 key={game.href}
                 href={game.href}
-                className="group rounded-[2rem] bg-gradient-to-r from-emerald-400 via-sky-400 to-violet-400 p-[2px] text-left shadow-[0_20px_60px_rgba(76,104,146,0.18)] transition hover:-translate-y-1"
+                className={`group rounded-[2rem] bg-gradient-to-r ${game.accentClassName} p-[2px] text-left shadow-[0_20px_60px_rgba(76,104,146,0.18)] transition hover:-translate-y-1`}
               >
                 <div className="rounded-[calc(2rem-2px)] bg-white/95 p-6 sm:p-7">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex min-w-0 items-start gap-4">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] bg-emerald-100 text-4xl shadow-inner">
+                      <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] ${game.iconClassName} text-4xl shadow-inner`}>
                         {game.emoji}
                       </div>
                       <div className="min-w-0">
@@ -49,7 +62,7 @@ export default function Home() {
                         <p className="mt-3 text-base leading-7 text-slate-600">{game.description}</p>
                       </div>
                     </div>
-                    <div className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition group-hover:bg-emerald-500">
+                    <div className={`rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white transition ${game.hoverClassName}`}>
                       들어가기
                     </div>
                   </div>
