@@ -1,6 +1,8 @@
 import { BestScores, NumberGameVersion, NumberPuzzle } from "@/lib/number-center/types";
 
 const bestScoreKeyPrefix = "kids-number-center-best";
+const nayulMaxNumber = 20;
+const narinMaxNumber = 50;
 
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -21,13 +23,22 @@ function shuffle<T>(items: T[]) {
   return next;
 }
 
-function uniqueChoices(answer: number, deltas: number[], min = 0) {
+function uniqueChoices(answer: number, deltas: number[], min = 0, max = Number.POSITIVE_INFINITY) {
   const set = new Set<number>([answer]);
 
   for (const delta of deltas) {
     const candidate = answer + delta;
-    if (candidate >= min) {
+    if (candidate >= min && candidate <= max) {
       set.add(candidate);
+    }
+  }
+
+  if (set.size < 3) {
+    for (let candidate = Math.max(min, answer - 10); candidate <= Math.min(max, answer + 10); candidate += 1) {
+      set.add(candidate);
+      if (set.size >= deltas.length + 1) {
+        break;
+      }
     }
   }
 
@@ -46,10 +57,9 @@ function buildArithmeticExplanation(step: number, ascending: boolean) {
 
 function buildNayulPuzzle(): NumberPuzzle {
   const family = randomFrom([
-    { step: 1, minStart: 1, maxStart: 97 },
-    { step: 2, minStart: 2, maxStart: 94 },
-    { step: 5, minStart: 5, maxStart: 85 },
-    { step: 10, minStart: 10, maxStart: 70 },
+    { step: 1, minStart: 1, maxStart: nayulMaxNumber - 2 },
+    { step: 2, minStart: 2, maxStart: nayulMaxNumber - 4 },
+    { step: 5, minStart: 5, maxStart: nayulMaxNumber - 10 },
   ]);
   const ascending = Math.random() > 0.25;
   const start = randomInt(family.minStart, family.maxStart);
@@ -60,7 +70,8 @@ function buildNayulPuzzle(): NumberPuzzle {
   const choices = uniqueChoices(
     answer,
     [-family.step * 2, -family.step, family.step, family.step * 2, family.step * 3],
-    0
+    0,
+    nayulMaxNumber
   ).slice(0, 3);
 
   if (!choices.includes(answer)) {
@@ -77,12 +88,12 @@ function buildNayulPuzzle(): NumberPuzzle {
 
 function buildNarinPuzzle(): NumberPuzzle {
   const pattern = randomFrom([
-    { step: 1, minStart: 1, maxStart: 40 },
-    { step: 2, minStart: 2, maxStart: 38 },
-    { step: 3, minStart: 1, maxStart: 35 },
-    { step: 4, minStart: 4, maxStart: 30 },
-    { step: 5, minStart: 5, maxStart: 25 },
-    { step: 10, minStart: 10, maxStart: 15 },
+    { step: 1, minStart: 1, maxStart: narinMaxNumber - 4 },
+    { step: 2, minStart: 2, maxStart: narinMaxNumber - 8 },
+    { step: 3, minStart: 1, maxStart: narinMaxNumber - 12 },
+    { step: 4, minStart: 4, maxStart: narinMaxNumber - 16 },
+    { step: 5, minStart: 5, maxStart: narinMaxNumber - 20 },
+    { step: 10, minStart: 10, maxStart: narinMaxNumber - 40 },
   ]);
   const ascending = Math.random() > 0.35;
   const start = randomInt(pattern.minStart, pattern.maxStart);
@@ -112,7 +123,8 @@ function buildNarinPuzzle(): NumberPuzzle {
       pattern.step * 2,
       pattern.step * 3,
     ],
-    0
+    0,
+    narinMaxNumber
   ).slice(0, 4);
 
   if (!choices.includes(answer)) {
