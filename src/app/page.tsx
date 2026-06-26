@@ -21,6 +21,16 @@ const games = [
     iconClassName: "bg-orange-100",
     hoverClassName: "group-hover:bg-orange-500",
   },
+  {
+    href: "/games/number-center",
+    emoji: "🔢",
+    title: "가운데 숫자 맞추기",
+    description: "나율이 버전과 나린이 버전으로 즐기는 숫자 규칙 맞추기 게임",
+    badge: "새 게임",
+    accentClassName: "from-fuchsia-400 via-violet-400 to-sky-400",
+    iconClassName: "bg-violet-100",
+    hoverClassName: "group-hover:bg-violet-500",
+  },
 ];
 
 export default function Home() {
