@@ -56,23 +56,14 @@ function buildArithmeticExplanation(step: number, ascending: boolean) {
 }
 
 function buildNayulPuzzle(): NumberPuzzle {
-  const family = randomFrom([
-    { step: 1, minStart: 1, maxStart: nayulMaxNumber - 2 },
-    { step: 2, minStart: 2, maxStart: nayulMaxNumber - 4 },
-    { step: 5, minStart: 5, maxStart: nayulMaxNumber - 10 },
-  ]);
+  const step = 1;
   const ascending = Math.random() > 0.25;
-  const start = randomInt(family.minStart, family.maxStart);
+  const start = randomInt(1, nayulMaxNumber - 2);
   const numbers = ascending
-    ? [start, start + family.step, start + family.step * 2]
-    : [start + family.step * 2, start + family.step, start];
+    ? [start, start + step, start + step * 2]
+    : [start + step * 2, start + step, start];
   const answer = numbers[1];
-  const choices = uniqueChoices(
-    answer,
-    [-family.step * 2, -family.step, family.step, family.step * 2, family.step * 3],
-    0,
-    nayulMaxNumber
-  ).slice(0, 3);
+  const choices = uniqueChoices(answer, [-2, -1, 1, 2, 3], 0, nayulMaxNumber).slice(0, 3);
 
   if (!choices.includes(answer)) {
     choices[0] = answer;
@@ -82,7 +73,7 @@ function buildNayulPuzzle(): NumberPuzzle {
     displayNumbers: numbers,
     answer,
     choices: shuffle(choices),
-    explanation: buildArithmeticExplanation(family.step, ascending),
+    explanation: buildArithmeticExplanation(step, ascending),
   };
 }
 
