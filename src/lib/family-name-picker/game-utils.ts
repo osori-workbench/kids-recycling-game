@@ -1,15 +1,15 @@
-import { BestScores, FamilyNameQuestion } from "@/lib/family-name-picker/types";
-import { distractorNames, familyNames } from "@/lib/family-name-picker/data";
+import { distractorNames, familyNames, versionInfo } from "@/lib/family-name-picker/data";
+import {
+  BestScores,
+  FamilyNameGameSession,
+  FamilyNameQuestion,
+  FamilyNameVersion,
+} from "@/lib/family-name-picker/types";
 
-const bestScoreKey = "kids-family-name-picker-best";
-const maxChoices = 5;
+const bestScoreKeyPrefix = "kids-family-name-picker-best";
 
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function randomFrom<T>(items: readonly T[]) {
-  return items[randomInt(0, items.length - 1)];
 }
 
 function shuffle<T>(items: readonly T[]) {
@@ -23,13 +23,44 @@ function shuffle<T>(items: readonly T[]) {
   return next;
 }
 
-export function nextQuestion(): FamilyNameQuestion {
-  const answer = randomFrom(familyNames);
-  const wrongChoices = shuffle(distractorNames).slice(0, maxChoices - 1);
+function createAnswerQueue() {
+  return shuffle(familyNames);
+}
 
+function buildChoices(answer: string, choiceCount: number) {
+  const wrongChoices = shuffle(distractorNames).slice(0, choiceCount - 1);
+  return shuffle([answer, ...wrongChoices]);
+}
+
+function buildQuestion(version: FamilyNameVersion, answer: string): FamilyNameQuestion {
   return {
     answer,
-    choices: shuffle([answer, ...wrongChoices]),
+    choices: buildChoices(answer, versionInfo[version].choiceCount),
+  };
+}
+
+export function createInitialSession(version: FamilyNameVersion): FamilyNameGameSession {
+  const queue = createAnswerQueue();
+  const [answer, ...remainingAnswers] = queue;
+
+  return {
+    question: buildQuestion(version, answer),
+    remainingAnswers,
+    round: 1,
+  };
+}
+
+export function advanceSession(
+  version: FamilyNameVersion,
+  currentSession: FamilyNameGameSession
+): FamilyNameGameSession {
+  const queue = currentSession.remainingAnswers.length > 0 ? currentSession.remainingAnswers : createAnswerQueue();
+  const [answer, ...remainingAnswers] = queue;
+
+  return {
+    question: buildQuestion(version, answer),
+    remainingAnswers,
+    round: currentSession.round + 1,
   };
 }
 
@@ -38,12 +69,12 @@ export function accuracy(score: number, attempts: number) {
   return Math.round((score / attempts) * 100);
 }
 
-export function readBestScores(): BestScores {
+export function readBestScores(version: FamilyNameVersion): BestScores {
   if (typeof window === "undefined") {
     return { practice: 0 };
   }
 
-  const raw = window.localStorage.getItem(bestScoreKey);
+  const raw = window.localStorage.getItem(`${bestScoreKeyPrefix}:${version}`);
 
   if (!raw) {
     return { practice: 0 };
@@ -59,7 +90,7 @@ export function readBestScores(): BestScores {
   }
 }
 
-export function writeBestScores(scores: BestScores) {
+export function writeBestScores(version: FamilyNameVersion, scores: BestScores) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(bestScoreKey, JSON.stringify(scores));
+  window.localStorage.setItem(`${bestScoreKeyPrefix}:${version}`, JSON.stringify(scores));
 }

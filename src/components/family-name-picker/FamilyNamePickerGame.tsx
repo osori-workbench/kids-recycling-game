@@ -1,11 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FeedbackToast } from "@/components/recycling/FeedbackToast";
 import { ResultPanel } from "@/components/recycling/ResultPanel";
-import { accuracy, nextQuestion, readBestScores, writeBestScores } from "@/lib/family-name-picker/game-utils";
-import { BestScores, FamilyNameQuestion } from "@/lib/family-name-picker/types";
+import { versionInfo } from "@/lib/family-name-picker/data";
+import {
+  accuracy,
+  advanceSession,
+  createInitialSession,
+  readBestScores,
+  writeBestScores,
+} from "@/lib/family-name-picker/game-utils";
+import {
+  BestScores,
+  FamilyNameGameSession,
+  FamilyNameVersion,
+} from "@/lib/family-name-picker/types";
 
 const maxMistakes = 5;
 const toastDurationMs = 1200;
@@ -15,20 +26,27 @@ type ToastState = {
   tone: "success" | "error";
 };
 
-export function FamilyNamePickerGame() {
-  const [question, setQuestion] = useState<FamilyNameQuestion>(() => nextQuestion());
+type FamilyNamePickerGameProps = {
+  version: FamilyNameVersion;
+};
+
+export function FamilyNamePickerGame({ version }: FamilyNamePickerGameProps) {
+  const info = versionInfo[version];
+  const [session, setSession] = useState<FamilyNameGameSession>(() => createInitialSession(version));
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isFinished, setIsFinished] = useState(false);
-  const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores());
+  const [bestScores, setBestScores] = useState<BestScores>(() => readBestScores(version));
+  const [roundStartedAt, setRoundStartedAt] = useState(() => Date.now());
+  const [timeNow, setTimeNow] = useState(() => Date.now());
   const toastTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    writeBestScores(bestScores);
-  }, [bestScores]);
+    writeBestScores(version, bestScores);
+  }, [bestScores, version]);
 
   useEffect(() => {
     return () => {
@@ -38,12 +56,22 @@ export function FamilyNamePickerGame() {
     };
   }, []);
 
+  const question = session.question;
   const accuracyValue = useMemo(() => accuracy(score, questionCount), [questionCount, score]);
   const bestScore = Math.max(bestScores.practice, score);
   const remainingChances = Math.max(0, maxMistakes - mistakes);
   const interactionLocked = isFinished || toast !== null;
+  const deadlineAt = info.timeLimitSeconds ? roundStartedAt + info.timeLimitSeconds * 1000 : null;
+  const secondsLeft =
+    deadlineAt === null ? null : Math.max(0, Math.ceil((deadlineAt - timeNow) / 1000));
 
-  const showToastThen = (nextToast: ToastState, afterToast?: () => void) => {
+  const moveToNextQuestion = useCallback(() => {
+    setRoundStartedAt(Date.now());
+    setTimeNow(Date.now());
+    setSession((prev) => advanceSession(version, prev));
+  }, [version]);
+
+  const showToastThen = useCallback((nextToast: ToastState, afterToast?: () => void) => {
     if (toastTimeoutRef.current !== null) {
       window.clearTimeout(toastTimeoutRef.current);
     }
@@ -54,7 +82,53 @@ export function FamilyNamePickerGame() {
       toastTimeoutRef.current = null;
       afterToast?.();
     }, toastDurationMs);
-  };
+  }, []);
+
+  const handleTimeout = useCallback(() => {
+    if (interactionLocked) return;
+
+    const nextMistakes = mistakes + 1;
+    setQuestionCount((prev) => prev + 1);
+    setMistakes(nextMistakes);
+    setStreak(0);
+
+    if (nextMistakes >= maxMistakes) {
+      setIsFinished(true);
+      showToastThen({
+        tone: "error",
+        message: `시간 초과! 이번 정답은 ${question.answer}이에요. 다섯 번 틀려서 게임 종료예요.`,
+      });
+      return;
+    }
+
+    showToastThen(
+      {
+        tone: "error",
+        message: `시간 초과! 이번 정답은 ${question.answer}이에요.`,
+      },
+      moveToNextQuestion
+    );
+  }, [interactionLocked, mistakes, moveToNextQuestion, question.answer, showToastThen]);
+
+  useEffect(() => {
+    if (!deadlineAt || interactionLocked) {
+      return;
+    }
+
+    const tickId = window.setInterval(() => {
+      setTimeNow(Date.now());
+    }, 250);
+
+    const timeoutMs = Math.max(0, deadlineAt - Date.now());
+    const timeoutId = window.setTimeout(() => {
+      handleTimeout();
+    }, timeoutMs);
+
+    return () => {
+      window.clearInterval(tickId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [deadlineAt, handleTimeout, interactionLocked]);
 
   const handleChoice = (choice: string) => {
     if (interactionLocked) return;
@@ -77,7 +151,7 @@ export function FamilyNamePickerGame() {
           tone: "success",
           message: `${question.answer} 찾기 성공!${nextStreak >= 2 ? ` ${nextStreak}콤보!` : ""}`,
         },
-        () => setQuestion(nextQuestion())
+        moveToNextQuestion
       );
       return;
     }
@@ -100,14 +174,14 @@ export function FamilyNamePickerGame() {
         tone: "error",
         message: `아쉬워요! 이번 정답은 ${question.answer}이에요.`,
       },
-      () => setQuestion(nextQuestion())
+      moveToNextQuestion
     );
   };
 
   return (
     <section className="grid gap-5">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[1.75rem] bg-gradient-to-br from-rose-400 via-pink-400 to-orange-300 p-[2px] shadow-[0_18px_50px_rgba(52,84,104,0.14)]">
+      <div className={`grid gap-4 ${info.timeLimitSeconds ? "sm:grid-cols-2 xl:grid-cols-5" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
+        <div className={`rounded-[1.75rem] bg-gradient-to-br ${info.accentClassName} p-[2px] shadow-[0_18px_50px_rgba(52,84,104,0.14)]`}>
           <div className="h-full rounded-[calc(1.75rem-2px)] bg-white/96 p-5">
             <p className="text-sm text-slate-500">점수</p>
             <p className="mt-2 text-3xl font-black text-slate-900">{score}점</p>
@@ -125,32 +199,36 @@ export function FamilyNamePickerGame() {
           <p className="text-sm text-slate-500">남은 기회</p>
           <p className="mt-2 text-3xl font-black text-slate-900">{remainingChances}번</p>
         </div>
+        {info.timeLimitSeconds ? (
+          <div className="rounded-[1.75rem] bg-white/92 p-5 shadow-[0_18px_50px_rgba(52,84,104,0.12)] ring-1 ring-white/80">
+            <p className="text-sm text-slate-500">남은 시간</p>
+            <p className="mt-2 text-3xl font-black text-slate-900">{secondsLeft ?? info.timeLimitSeconds}초</p>
+          </div>
+        ) : null}
       </div>
 
       <div className="relative rounded-[2rem] bg-white p-6 shadow-[0_18px_60px_rgba(52,84,104,0.12)] ring-1 ring-slate-100 sm:p-8 lg:p-10">
-        <div className="rounded-[2rem] bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 p-5 ring-1 ring-white/80 sm:p-6">
+        <div className={`rounded-[2rem] bg-gradient-to-br ${info.softPanelClassName} p-5 ring-1 ring-white/80 sm:p-6`}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-rose-500">이름 고르기</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">{info.label}</p>
               <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">우리 가족 이름 하나를 골라요</h2>
-              <p className="mt-3 text-base leading-7 text-slate-600">
-                아래 보기 5개 중에서 우리 가족 이름은 딱 하나예요. 큰 버튼을 눌러서 맞혀보세요.
-              </p>
+              <p className="mt-3 text-base leading-7 text-slate-600">{info.summary}</p>
             </div>
             <div className="rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-white/80">
-              보기 5개 중 정답 1개
+              {info.example}
             </div>
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={`mt-8 grid gap-4 ${info.choiceCount === 5 ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
           {question.choices.map((choice) => (
             <button
-              key={choice}
+              key={`${session.round}-${choice}`}
               type="button"
               disabled={interactionLocked}
               onClick={() => handleChoice(choice)}
-              className="rounded-[1.75rem] bg-gradient-to-r from-rose-500 via-pink-500 to-orange-400 px-5 py-7 text-center text-3xl font-black text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:text-4xl"
+              className={`rounded-[1.75rem] px-5 py-7 text-center text-3xl font-black text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 sm:text-4xl ${info.accentButtonClassName}`}
             >
               {choice}
             </button>
@@ -158,7 +236,7 @@ export function FamilyNamePickerGame() {
         </div>
 
         <div className="mt-8 rounded-[1.5rem] bg-slate-50 px-5 py-4 text-sm leading-7 text-slate-600 ring-1 ring-slate-100">
-          <strong className="font-black text-slate-900">힌트:</strong> 우리 가족 이름만 정답이에요. 낯선 이름은 속임수 보기일 수 있어요.
+          <strong className="font-black text-slate-900">순서 규칙:</strong> 가족 이름은 한 바퀴를 전부 돌 때까지 중복 없이 나오고, 다 나온 뒤에만 다음 랜덤 사이클로 넘어가요.
         </div>
 
         {toast ? <FeedbackToast message={toast.message} tone={toast.tone} /> : null}
@@ -166,8 +244,12 @@ export function FamilyNamePickerGame() {
 
       {isFinished ? (
         <ResultPanel
-          title="우리 가족 이름 찾기 종료!"
-          body="다섯 번 틀리면 끝나요. 위쪽 다시 시작 버튼으로 바로 또 도전할 수 있어요."
+          title={`${info.shortLabel} 가족 이름 찾기 종료!`}
+          body={
+            info.timeLimitSeconds
+              ? "나린이 버전은 10초 안에 빠르게 찾는 도전 모드예요. 위쪽 다시 시작 버튼으로 바로 또 도전할 수 있어요."
+              : "다섯 번 틀리면 끝나요. 위쪽 다시 시작 버튼으로 바로 또 도전할 수 있어요."
+          }
           score={score}
           accuracy={accuracyValue}
         />

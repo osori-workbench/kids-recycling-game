@@ -8,12 +8,14 @@ import { NayulGame } from "@/components/recycling/NayulGame";
 import { VersionSelector } from "@/components/recycling/VersionSelector";
 import { versionInfo } from "@/lib/recycling/data";
 import { GameVersion } from "@/lib/recycling/types";
+import { defaultKidsBgm } from "@/lib/shared/media";
 
 export function RecyclingGameShell() {
   const [selectedVersion, setSelectedVersion] = useState<GameVersion | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [gameSessionKey, setGameSessionKey] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const bgmArmedRef = useRef(false);
 
   const isPlaying = Boolean(hasStarted && selectedVersion);
 
@@ -23,6 +25,7 @@ export function RecyclingGameShell() {
     try {
       audioRef.current.loop = true;
       audioRef.current.muted = false;
+      audioRef.current.volume = 1;
 
       if (fromStart) {
         audioRef.current.currentTime = 0;
@@ -34,7 +37,14 @@ export function RecyclingGameShell() {
     }
   };
 
+  const ensureBgmStarted = () => {
+    if (bgmArmedRef.current) return;
+    bgmArmedRef.current = true;
+    void tryPlayBgm();
+  };
+
   const handleStartVersion = (version: GameVersion) => {
+    bgmArmedRef.current = true;
     setSelectedVersion(version);
     setHasStarted(true);
     setGameSessionKey((prev) => prev + 1);
@@ -47,12 +57,17 @@ export function RecyclingGameShell() {
   };
 
   const restartCurrentGame = () => {
+    bgmArmedRef.current = true;
     setGameSessionKey((prev) => prev + 1);
-    void tryPlayBgm();
+    void tryPlayBgm({ fromStart: true });
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff7d6,_#f4fbff_45%,_#eef7ef)] px-4 pb-40 pt-6 text-slate-800 sm:px-6 lg:px-8">
+    <main
+      className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff7d6,_#f4fbff_45%,_#eef7ef)] px-4 pb-40 pt-6 text-slate-800 sm:px-6 lg:px-8"
+      onPointerDownCapture={ensureBgmStarted}
+      onKeyDownCapture={ensureBgmStarted}
+    >
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -107,20 +122,24 @@ export function RecyclingGameShell() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-500">BGM</p>
-            <h2 className="mt-1 text-lg font-black text-slate-900">유니콘 하트 우리 가족</h2>
+            <h2 className="mt-1 text-lg font-black text-slate-900">{defaultKidsBgm.title}</h2>
           </div>
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:min-w-[420px] lg:flex-row lg:items-center lg:justify-end">
             <audio
               ref={audioRef}
               className="w-full lg:max-w-md"
-              src="/assets/family-bgm.mp3"
+              src={defaultKidsBgm.src}
               controls
               loop
               preload="auto"
+              playsInline
             />
             <button
               type="button"
-              onClick={() => void tryPlayBgm()}
+              onClick={() => {
+                bgmArmedRef.current = true;
+                void tryPlayBgm();
+              }}
               className="rounded-full bg-violet-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-600"
             >
               재생

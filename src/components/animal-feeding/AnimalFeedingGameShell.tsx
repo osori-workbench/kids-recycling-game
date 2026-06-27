@@ -14,6 +14,7 @@ import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 import { FeedbackToast } from "@/components/recycling/FeedbackToast";
 import { AnimalFoodPair, animalFoodPairs, shufflePairs } from "@/lib/animal-feeding/data";
+import { defaultKidsBgm } from "@/lib/shared/media";
 
 type ToastState = {
   message: string;
@@ -976,13 +977,13 @@ export function AnimalFeedingGameShell() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-violet-500">BGM</p>
-            <h2 className="mt-1 text-lg font-black text-slate-900">유니콘 하트 우리 가족</h2>
+            <h2 className="mt-1 text-lg font-black text-slate-900">{defaultKidsBgm.title}</h2>
           </div>
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:min-w-[420px] lg:flex-row lg:items-center lg:justify-end">
             <audio
               ref={audioRef}
               className="w-full lg:max-w-md"
-              src="/assets/family-bgm.mp3"
+              src={defaultKidsBgm.src}
               controls
               loop
               preload="auto"

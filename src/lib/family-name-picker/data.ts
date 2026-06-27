@@ -1,3 +1,5 @@
+import { FamilyNameVersion, VersionInfo } from "@/lib/family-name-picker/types";
+
 export const familyNames = [
   "김기훈",
   "김수진",
@@ -61,3 +63,29 @@ export const distractorNames = [
   "오지후",
   "오하윤",
 ] as const;
+
+export const versionInfo: Record<FamilyNameVersion, VersionInfo> = {
+  nayul: {
+    label: "나율이 버전",
+    shortLabel: "나율이",
+    difficultyLabel: "쉬운 버전",
+    accentClassName: "from-rose-400 via-pink-400 to-orange-300",
+    accentButtonClassName: "bg-rose-500 hover:bg-rose-600",
+    softPanelClassName: "from-rose-50 via-pink-50 to-orange-50",
+    summary: "지금 방식 그대로, 보기 5개 중에서 우리 가족 이름 하나를 천천히 찾아 눌러요.",
+    example: "보기 5개 · 시간 제한 없음",
+    choiceCount: 5,
+  },
+  narin: {
+    label: "나린이 버전",
+    shortLabel: "나린이",
+    difficultyLabel: "도전 버전",
+    accentClassName: "from-sky-400 via-cyan-400 to-indigo-400",
+    accentButtonClassName: "bg-sky-500 hover:bg-sky-600",
+    softPanelClassName: "from-sky-50 via-cyan-50 to-indigo-50",
+    summary: "보기 7개 속에서 10초 안에 가족 이름을 찾아야 하는 빠른 도전 버전이에요.",
+    example: "보기 7개 · 10초 제한",
+    choiceCount: 7,
+    timeLimitSeconds: 10,
+  },
+};

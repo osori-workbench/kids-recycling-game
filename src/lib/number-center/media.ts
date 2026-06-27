@@ -1,9 +1,7 @@
 import { NumberGameVersion } from "@/lib/number-center/types";
+import { defaultKidsBgm } from "@/lib/shared/media";
 
-export const numberCenterBgm = {
-  title: "유니콘 하트 우리 가족",
-  src: "/assets/family-bgm.mp3",
-} as const;
+export const numberCenterBgm = defaultKidsBgm;
 
 export const numberCenterVersionImages: Record<
   NumberGameVersion,
