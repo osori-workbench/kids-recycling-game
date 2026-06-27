@@ -31,6 +31,16 @@ const games = [
     iconClassName: "bg-violet-100",
     hoverClassName: "group-hover:bg-violet-500",
   },
+  {
+    href: "/games/family-name-picker",
+    emoji: "👨‍👩‍👧‍👦",
+    title: "우리 가족 이름 찾기",
+    description: "보기 5개 중에서 우리 가족 이름 하나를 골라 맞히는 가족 이름 게임",
+    badge: "새 게임",
+    accentClassName: "from-rose-400 via-pink-400 to-orange-300",
+    iconClassName: "bg-rose-100",
+    hoverClassName: "group-hover:bg-rose-500",
+  },
 ];
 
 export default function Home() {
