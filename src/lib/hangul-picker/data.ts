@@ -1,0 +1,50 @@
+import { HangulPickerVersion, HangulWord, VersionInfo } from "@/lib/hangul-picker/types";
+
+export const hangulWords: HangulWord[] = [
+  { id: "apple", word: "사과", emoji: "🍎" },
+  { id: "banana", word: "바나나", emoji: "🍌" },
+  { id: "car", word: "자동차", emoji: "🚗" },
+  { id: "airplane", word: "비행기", emoji: "✈️" },
+  { id: "butterfly", word: "나비", emoji: "🦋" },
+  { id: "umbrella", word: "우산", emoji: "☂️" },
+  { id: "hat", word: "모자", emoji: "🎩" },
+  { id: "shoes", word: "신발", emoji: "👟" },
+  { id: "clock", word: "시계", emoji: "⏰" },
+  { id: "glasses", word: "안경", emoji: "👓" },
+  { id: "bag", word: "가방", emoji: "🎒" },
+  { id: "cake", word: "케이크", emoji: "🎂" },
+  { id: "balloon", word: "풍선", emoji: "🎈" },
+  { id: "star", word: "별", emoji: "⭐" },
+  { id: "tree", word: "나무", emoji: "🌳" },
+  { id: "flower", word: "꽃", emoji: "🌸" },
+  { id: "fish", word: "물고기", emoji: "🐟" },
+  { id: "cat", word: "고양이", emoji: "🐱" },
+  { id: "dog", word: "강아지", emoji: "🐶" },
+  { id: "rabbit", word: "토끼", emoji: "🐰" },
+] as const;
+
+export const versionInfo: Record<HangulPickerVersion, VersionInfo> = {
+  nayul: {
+    label: "나율이 버전",
+    shortLabel: "나율이",
+    difficultyLabel: "쉬운 버전",
+    accentClassName: "from-emerald-400 via-teal-400 to-cyan-300",
+    accentButtonClassName: "bg-emerald-500 hover:bg-emerald-600",
+    softPanelClassName: "from-emerald-50 via-teal-50 to-cyan-50",
+    summary: "그림을 보고 보기 3개 중에서 맞는 글자를 천천히 찾아 눌러요.",
+    example: "보기 3개 · 시간 제한 없음",
+    choiceCount: 3,
+  },
+  narin: {
+    label: "나린이 버전",
+    shortLabel: "나린이",
+    difficultyLabel: "도전 버전",
+    accentClassName: "from-fuchsia-400 via-purple-400 to-indigo-400",
+    accentButtonClassName: "bg-fuchsia-500 hover:bg-fuchsia-600",
+    softPanelClassName: "from-fuchsia-50 via-purple-50 to-indigo-50",
+    summary: "보기 5개 속에서 8초 안에 그림에 맞는 글자를 찾아야 하는 빠른 도전 버전이에요.",
+    example: "보기 5개 · 8초 제한",
+    choiceCount: 5,
+    timeLimitSeconds: 8,
+  },
+};

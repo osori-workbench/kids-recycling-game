@@ -51,6 +51,16 @@ const games = [
     iconClassName: "bg-cyan-100",
     hoverClassName: "group-hover:bg-cyan-500",
   },
+  {
+    href: "/games/hangul-picker",
+    emoji: "🈶",
+    title: "한글 그림 맞추기",
+    description: "그림을 보고 알맞은 한글 낱말을 고르는 나율이/나린이 버전 학습 게임",
+    badge: "새 게임",
+    accentClassName: "from-emerald-400 via-teal-400 to-cyan-300",
+    iconClassName: "bg-teal-100",
+    hoverClassName: "group-hover:bg-teal-500",
+  },
 ];
 
 export default function Home() {
