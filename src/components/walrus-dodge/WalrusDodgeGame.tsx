@@ -14,6 +14,8 @@ const minSpawnIntervalMs = 380;
 const initialFallSpeedPercentPerSec = 22;
 const maxFallSpeedPercentPerSec = 55;
 const difficultyRampSeconds = 30;
+const maxLives = 3;
+const hitInvulnerabilityMs = 900;
 
 type ToastState = {
   message: string;
@@ -28,6 +30,7 @@ export function WalrusDodgeGame() {
   const [playerX, setPlayerX] = useState(50);
   const [walruses, setWalruses] = useState<FallingWalrus[]>([]);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [lives, setLives] = useState(maxLives);
 
   const fieldRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -38,6 +41,9 @@ export function WalrusDodgeGame() {
   const elapsedRef = useRef(0);
   const playerXRef = useRef(50);
   const isGameOverRef = useRef(false);
+  const livesRef = useRef(maxLives);
+  const invulnerableUntilRef = useRef(0);
+  const toastTimeoutRef = useRef<number | null>(null);
 
   const endGame = useCallback(() => {
     if (isGameOverRef.current) return;
@@ -51,10 +57,11 @@ export function WalrusDodgeGame() {
       setBestSeconds(finalSeconds);
       setToast({ message: `새 기록! ${formatSeconds(finalSeconds)} 버텼어요!`, tone: "success" });
     } else {
-      setToast({ message: `바다코끼리에게 잡혔어요! ${formatSeconds(finalSeconds)} 버텼어요.`, tone: "error" });
+      setToast({ message: `바다코끼리에게 3번 부딪혔어요! ${formatSeconds(finalSeconds)} 버텼어요.`, tone: "error" });
     }
 
-    window.setTimeout(() => setToast(null), 1600);
+    if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = window.setTimeout(() => setToast(null), 1600);
   }, []);
 
   const tick = useCallback(
@@ -96,7 +103,8 @@ export function WalrusDodgeGame() {
         ]);
       }
 
-      let collided = false;
+      let hitCount = 0;
+      const canBeHit = timestamp >= invulnerableUntilRef.current;
 
       setWalruses((prev) => {
         const next: FallingWalrus[] = [];
@@ -106,12 +114,16 @@ export function WalrusDodgeGame() {
             continue;
           }
 
-          if (
+          const isColliding =
+            canBeHit &&
             newY >= 100 - collisionYBand &&
             newY <= 100 &&
-            Math.abs(walrus.x - playerXRef.current) < (playerWidthPercent + walrusWidthPercent) / 2 - 2
-          ) {
-            collided = true;
+            Math.abs(walrus.x - playerXRef.current) < (playerWidthPercent + walrusWidthPercent) / 2 - 2;
+
+          if (isColliding && hitCount === 0) {
+            // Only register one hit per tick, but still remove this walrus from play.
+            hitCount += 1;
+            continue;
           }
 
           next.push({ ...walrus, y: newY });
@@ -119,9 +131,20 @@ export function WalrusDodgeGame() {
         return next;
       });
 
-      if (collided) {
-        endGame();
-        return;
+      if (hitCount > 0) {
+        invulnerableUntilRef.current = timestamp + hitInvulnerabilityMs;
+        const remainingLives = Math.max(0, livesRef.current - 1);
+        livesRef.current = remainingLives;
+        setLives(remainingLives);
+
+        if (remainingLives <= 0) {
+          endGame();
+          return;
+        }
+
+        setToast({ message: `부딪혔어요! 남은 목숨 ${remainingLives}개`, tone: "error" });
+        if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = window.setTimeout(() => setToast(null), 1000);
       }
 
       rafRef.current = requestAnimationFrame(tickRef.current);
@@ -145,6 +168,9 @@ export function WalrusDodgeGame() {
     lastFrameRef.current = 0;
     lastSpawnRef.current = 0;
     nextIdRef.current = 0;
+    invulnerableUntilRef.current = 0;
+    livesRef.current = maxLives;
+    setLives(maxLives);
     setToast(null);
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -154,6 +180,7 @@ export function WalrusDodgeGame() {
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (toastTimeoutRef.current) window.clearTimeout(toastTimeoutRef.current);
     };
   }, []);
 
@@ -204,6 +231,13 @@ export function WalrusDodgeGame() {
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">최고 기록</p>
             <p className="mt-1 text-2xl font-black text-cyan-600">{formatSeconds(bestSeconds)}</p>
           </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">남은 목숨</p>
+            <p className="mt-1 text-2xl font-black text-rose-500">
+              {"❤️".repeat(Math.max(0, lives))}
+              {lives === 0 ? "💔" : null}
+            </p>
+          </div>
         </div>
         <button
           type="button"
@@ -228,6 +262,7 @@ export function WalrusDodgeGame() {
             <h2 className="text-2xl font-black text-slate-900 sm:text-3xl">하늘에서 바다코끼리가 떨어져요!</h2>
             <p className="max-w-md text-base leading-7 text-slate-600">
               마우스나 손가락으로 준이를 좌우로 움직여서 바다코끼리를 피해보세요. 화살표 키로도 움직일 수 있어요.
+              바다코끼리에 <strong>3번</strong> 부딪히면 게임이 끝나요!
             </p>
             <button
               type="button"
@@ -268,7 +303,7 @@ export function WalrusDodgeGame() {
         {isGameOver ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-slate-900/45 px-6 text-center backdrop-blur-sm">
             <p className="text-5xl">😵</p>
-            <h2 className="text-2xl font-black text-white sm:text-3xl">바다코끼리에게 잡혔어요!</h2>
+            <h2 className="text-2xl font-black text-white sm:text-3xl">바다코끼리에게 3번 부딪혔어요!</h2>
             <p className="text-lg font-bold text-white/90">
               이번 기록 {formatSeconds(elapsedSeconds)} · 최고 기록 {formatSeconds(bestSeconds)}
             </p>
