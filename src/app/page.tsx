@@ -41,6 +41,16 @@ const games = [
     iconClassName: "bg-rose-100",
     hoverClassName: "group-hover:bg-rose-500",
   },
+  {
+    href: "/games/walrus-dodge",
+    emoji: "🦭",
+    title: "바다코끼리 피하기",
+    description: "하늘에서 떨어지는 바다코끼리를 좌우로 피하며 오래 버티는 가족용 액션 게임",
+    badge: "새 게임",
+    accentClassName: "from-cyan-400 via-sky-400 to-blue-400",
+    iconClassName: "bg-cyan-100",
+    hoverClassName: "group-hover:bg-cyan-500",
+  },
 ];
 
 export default function Home() {
